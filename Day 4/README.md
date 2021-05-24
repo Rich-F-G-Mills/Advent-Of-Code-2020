@@ -49,7 +49,7 @@ byr:1982 eyr:2023 hgt:68in
 ##### Code comments
 
 * Used a mapping to both represent the required field names and the format predicate (keys/values respectively).
-* Functional composition opperator used to string functional applications together (>>).
+* Functional composition operator (>>) used to string functional applications together.
 * Format predicates employed using:
   - Partially applied functions (such as 'is_digits')
   - Lambda functions used for requirements specified via regex.

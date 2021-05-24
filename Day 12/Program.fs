@@ -1,5 +1,4 @@
-﻿// Learn more about F# at http://fsharp.org
-
+﻿
 open System
 open System.IO
 
@@ -7,6 +6,7 @@ type ShipState = Ship of x: int * y: int * direction: int option
 
 type WaypointState = Waypoint of rel_x: int * rel_y: int
 
+[<AutoOpen>]
 module Actions =
 
     type Action =
@@ -38,15 +38,14 @@ module Actions =
         Instruction (inst, extent)
 
     let UpdateDirection current delta =
-        let unadj_new_dir = current + delta
-
         let adjust_for_neg dir =
             if dir < 0 then 360 + (dir % 360) else dir
 
         let cap_at_360 dir =
             dir % 360
 
-        unadj_new_dir
+        current
+        |> (+) delta
         |> adjust_for_neg
         |> cap_at_360
 
@@ -102,10 +101,6 @@ module Actions =
             | TurnLeft -> ship, (RotateWaypoint waypoint -extent)
             | TurnRight -> ship, (RotateWaypoint waypoint extent)
             | MoveForward -> Ship (x + rel_x * extent, y + rel_y * extent, None), waypoint
-
-
-open Actions
-
 
 let ManhattanDistance (Ship (x, y, _)) =
     Math.Abs(x) + Math.Abs(y)

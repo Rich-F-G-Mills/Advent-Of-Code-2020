@@ -8,7 +8,7 @@ open System.Text.RegularExpressions
 let main argv =    
     
     // Split the input file into the individual passports and then extract the key-value pairs.
-    let passport_info =
+    let passportInfo =
         let inputs =
             File.ReadAllText "Inputs.txt"
 
@@ -25,20 +25,20 @@ let main argv =
         |> Array.map (Map.ofArray)
 
     // Specifies a list of predicates that must be satisfied for each key type.
-    let required_fields =
-        let is_digits min max (x: string) =
+    let requiredFields =
+        let isDigits min max (x: string) =
             match (Int32.TryParse x) with
             | (true, value) -> (value >= min) && (value <= max)
             | _ -> false
 
         // First attempt at using active patterns.
         let (|Inches|Cm|Neither|) (x: string) =
-            let re_match = Regex.Match(x, @"^(\d{2,3})(in|cm)$")
+            let reMatch = Regex.Match(x, @"^(\d{2,3})(in|cm)$")
 
-            if re_match.Success then
-                match Int32.TryParse re_match.Groups.[1].Value with
+            if reMatch.Success then
+                match Int32.TryParse reMatch.Groups.[1].Value with
                 | (true, value) ->
-                    match re_match.Groups.[2].Value with
+                    match reMatch.Groups.[2].Value with
                     | "in" -> Inches value
                     | "cm" -> Cm value
                     | _ -> Neither
@@ -48,9 +48,9 @@ let main argv =
             else
                 Neither      
 
-        [("byr", is_digits 1920 2002)
-         ("iyr", is_digits 2010 2020)
-         ("eyr", is_digits 2020 2030)
+        [("byr", isDigits 1920 2002)
+         ("iyr", isDigits 2010 2020)
+         ("eyr", isDigits 2020 2030)
          ("hgt",
             function
             | Inches x -> (x >= 59) && (x <= 76)
@@ -61,31 +61,33 @@ let main argv =
          ("pid", fun x -> Regex.IsMatch(x, @"^\d{9}$"))]
          |> Map.ofSeq
     
-    let required_keys =
-        required_fields
+    let requiredKeys =
+        requiredFields
         |> Map.toSeq
         |> Seq.map fst
         |> Set
 
     // This will contain only those passports with the required fields.
-    let valid_passports =
-        let has_required_fields =
+    let validPassports =
+        let hasRequiredFields =
             Map.toSeq
             >> Seq.map fst
             >> Set
-            >> Set.isSubset required_keys
+            >> Set.isSubset requiredKeys
 
-        passport_info
-        |> Array.filter has_required_fields
+        passportInfo
+        |> Array.filter hasRequiredFields
 
-    valid_passports
+    validPassports
     // Retain on those elements which are true.
     |> Array.length
     |> printfn "Part 1 answer = %i"
 
-    let all_fields_valid passport =
-        let field_valid field value =
-            required_fields
+    // Check to see if all of the fields on the passport are valid.
+    let allFieldsValid passport =
+        // Check to see if a particular field is valid.
+        let validField field value =
+            requiredFields
             |> Map.tryFind field
             |> function
                 | Some pred -> pred value
@@ -93,10 +95,10 @@ let main argv =
                 | None -> true
 
         passport
-        |> Map.forall field_valid
+        |> Map.forall validField
 
-    valid_passports
-    |> Seq.filter all_fields_valid 
+    validPassports
+    |> Seq.filter allFieldsValid 
     |> Seq.length
     |> printfn "Part 2 answer = %i"
 

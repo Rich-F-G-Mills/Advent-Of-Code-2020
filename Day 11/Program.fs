@@ -1,9 +1,7 @@
-﻿// Learn more about F# at http://fsharp.org
-
-open System
+﻿
 open System.IO
 
-
+// Represents the value for each cell in the grid.
 type CellType =
     | Floor
     | EmptySeat
@@ -19,89 +17,100 @@ type CellType =
 
 [<EntryPoint>]
 let main argv =
-    printfn "Starting program..."
-
-    let starting_grid =
+    // Read in the starting grid.
+    let startingGrid =
         File.ReadAllLines "Inputs.txt"
         |> Array.map (Array.ofSeq >> (Array.map CellType.fromChar))  
 
+    // Generate a matrix of grid coordinates for each cell in the grid.
     let coords =
-        starting_grid
+        startingGrid
         |> Array.mapi (
             fun y row ->
                 row
                 |> Array.mapi (fun x _ -> (x, y)))
 
-    let surrounding_deltas =
+    // Generate the adjacent offsets.
+    let surroundingDeltas =
         Array.allPairs [|-1; 0; 1|] [|-1; 0; 1|]
         |> Array.except [|(0, 0)|]
 
-    let (max_x, max_y) =
+    // Get the grid size.
+    let (xMax, yMax) =
         (coords |> Array.concat |> Array.map fst |> Array.max,
-         coords |> Array.concat |> Array.map snd |> Array.max) 
+         coords |> Array.concat |> Array.map snd |> Array.max)
 
-    let surrounding_coords =              
+    let isWithinGrid (x, y) =
+        (x >= 0) && (y >= 0) && (x <= xMax) && (y <= yMax)
+
+    // Generate the adjacent coordinates for each cell in the grid.
+    let surroundingCoords =          
         coords
         |> Array.map (
             Array.map (
                 fun (x, y) ->
-                    surrounding_deltas
+                    surroundingDeltas
                     |> Array.map(fun (dx, dy) -> (x + dx, y + dy))
-                    |> Array.filter (fun (x2, y2) -> (x2 >= 0) && (y2 >= 0) && (x2 <= max_x) && (y2 <= max_y))))
+                    |> Array.filter isWithinGrid))
 
-
-    let rule_part1 grid (cell_x, cell_y) =
-        let surrounding_occupied =
-            surrounding_coords
+    // Determine the new state for a cell at a given location (according to part 1).
+    let rulePart1 grid (cell_x, cell_y) =
+        let surroundingOccupied =
+            surroundingCoords
             |> Array.item cell_y
             |> Array.item cell_x
             |> Array.map (fun (x, y) -> grid |> Array.item y |> Array.item x)
-            |> Array.filter(function | OccupiedSeat -> true | _ -> false)
-            |> Array.length
+            |> Array.map (function | OccupiedSeat -> 1 | _ -> 0)
+            |> Array.sum
 
         let cell =
-            (grid |> Array.item cell_y |> Array.item cell_x)
+            grid
+            |> Array.item cell_y
+            |> Array.item cell_x
 
         match cell with
-        | EmptySeat when surrounding_occupied = 0 -> OccupiedSeat
-        | OccupiedSeat when surrounding_occupied >= 4 -> EmptySeat
+        | EmptySeat when surroundingOccupied = 0 -> OccupiedSeat
+        | OccupiedSeat when surroundingOccupied >= 4 -> EmptySeat
         | _ -> cell
 
-
-    let rule_part2 grid (cell_x, cell_y) =
-        let surrounding_occupied =
-            surrounding_deltas
+    // Determine the new state for a cell at a given location (according to part 2).
+    let rulePart2 grid (cell_x, cell_y) =
+        let surroundingOccupied =
+            surroundingDeltas
             |> Array.map (
                 fun (dx, dy) ->
                     Seq.initInfinite id
                     |> Seq.skip 1
                     |> Seq.map (fun scalar -> (cell_x + scalar * dx, cell_y + scalar * dy))
-                    |> Seq.takeWhile (fun (sx, sy) -> (sx >= 0) && (sy >= 0) && (sx <= max_x) && (sy <= max_y))
+                    |> Seq.takeWhile isWithinGrid
                     |> Seq.map (fun (sx, sy) -> grid |> Array.item sy |> Array.item sx)
                     |> Seq.tryFind (function | Floor -> false | _ -> true))
             |> Array.sumBy (function | Some OccupiedSeat -> 1 | _ -> 0)
 
         let cell =
-            (grid |> Array.item cell_y |> Array.item cell_x)
+            grid
+            |> Array.item cell_y
+            |> Array.item cell_x
                 
         match cell with
-        | EmptySeat when surrounding_occupied = 0 -> OccupiedSeat
-        | OccupiedSeat when surrounding_occupied >= 5 -> EmptySeat
+        | EmptySeat when surroundingOccupied = 0 -> OccupiedSeat
+        | OccupiedSeat when surroundingOccupied >= 5 -> EmptySeat
         | _ -> cell
 
+    // A wrapper to repeatedly apply given logic to each cell in a grid.
+    let rec generateIterations ruleLogic grid =
+        seq {
+            let result = Array.map (Array.map (ruleLogic grid)) coords
+            yield result
+            yield! generateIterations ruleLogic result
+        }
 
-    let iterate_grid rule_callback grid =
-        let iterate_cell (cell_x, cell_y) =
-            rule_callback grid (cell_x, cell_y)
+    let iterateGridPart1 = generateIterations rulePart1
+    let iterateGridPart2 = generateIterations rulePart2
 
-        Array.map (Array.map iterate_cell) coords
-
-    let iterate_grid_part1 = iterate_grid rule_part1
-    let iterate_grid_part2 = iterate_grid rule_part2
-
-    let find_stable grid_iterator =
-        Seq.initInfinite id
-        |> Seq.scan (fun prev_grid _ -> grid_iterator prev_grid) starting_grid
+    // Allows us to find the point at which the iterations become stable.
+    let findStableSolution gridIterator =
+        gridIterator startingGrid
         |> Seq.pairwise
         |> Seq.skipWhile ((<||) (<>))
         |> Seq.head
@@ -109,10 +118,10 @@ let main argv =
         |> Array.concat
         |> Array.sumBy (function | OccupiedSeat -> 1 | _ -> 0)
             
-    find_stable iterate_grid_part1
+    findStableSolution iterateGridPart1
     |> printfn "Part 1 answer = %i"
 
-    find_stable iterate_grid_part2
+    findStableSolution iterateGridPart2
     |> printfn "Part 2 answer = %i"
 
-    0 // return an integer exit code
+    0

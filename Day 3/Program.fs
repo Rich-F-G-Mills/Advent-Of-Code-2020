@@ -9,7 +9,7 @@ let main argv =
         File.ReadAllLines "Inputs.txt"
         |> Array.map (Seq.map (function | '#' -> true | _ -> false) >> Array.ofSeq)
 
-    let grid_width, grid_height =
+    let gridWidth, gridHeight =
         (Array.length grid.[0]), (Array.length grid)
 
     // Count the number of trees encountered when starting in the top left and moving dx/dy each time.
@@ -17,8 +17,8 @@ let main argv =
         let trees_at_location (x, y) =
             if grid.[y].[x] then 1 else 0
 
-        Seq.initInfinite (fun idx -> ((idx * dx) % grid_width, idx * dy))
-        |> Seq.takeWhile (fun (_, y) -> y < grid_height)
+        Seq.initInfinite (fun idx -> ((idx * dx) % gridWidth, idx * dy))
+        |> Seq.takeWhile (fun (_, y) -> y < gridHeight)
         |> Seq.sumBy trees_at_location
 
     trees_encountered (3, 1)

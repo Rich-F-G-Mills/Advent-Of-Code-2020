@@ -1,36 +1,34 @@
-﻿// Learn more about F# at http://fsharp.org
-
-open System
+﻿
 open System.IO
-open System.Text.RegularExpressions
-
 open FParsec
 
-let bag_target =
+// Here we use FParsec rules in order to interprate the puzzle inputs.
+let bagTarget =
     manyChars asciiLetter
     .>> spaces
     .>>. manyChars asciiLetter
     |>> (fun x -> $"{fst x} {snd x}")
 
-let contains_no_bags =
+let containsNoBags =
     pstring "no other bags"
     >>% []
 
-let sub_bags =
+let subBags =
     pint32
     .>> spaces
-    .>>. bag_target
+    .>>. bagTarget
     .>> spaces
     .>> pstring "bag"
     .>> optional (pchar 's')
 
-let contains_other_bags =
-    sepBy sub_bags (pstring ", ")
+let containsOtherBags =
+    sepBy subBags (pstring ", ")
 
+// This is the top-level grammar requirement.
 let rule =
-    bag_target
+    bagTarget
     .>> pstring " bags contain "
-    .>>. (contains_no_bags <|> contains_other_bags)
+    .>>. (containsNoBags <|> containsOtherBags)
     .>> pchar '.'
     .>> eof
     
@@ -38,64 +36,85 @@ let rule =
 [<EntryPoint>]
 let main argv =
     let rules =
+        // Convert the puzzle inputs into a mapping from bag name to a list of the
+        // number and type of bags that need to go into it.
         File.ReadAllLines "Inputs.txt"
         |> Array.map (run rule)
         |> Array.map (function | Success (r, _, _) -> r
                                | _ -> failwith "Unexpected error.")
         |> Map.ofArray
 
-    let rule_links =
+    // For each bag, get the bag types that it depends on.
+    let ruleLinks =
         rules
-        |> Map.map (fun _ precedents -> precedents |> List.map snd |> Set.ofList)
-        |> Map.toList
+        |> Map.map (fun _ precedents -> precedents |> List.map snd |> Set)
 
-    let rec find_deps (found: string Set) (to_find: string Set) =
-        let new_found =
-            rule_links
-            |> List.choose (fun (bag, contains) ->
-                    if Set.intersect to_find contains |> Set.isEmpty then None
+    // This finds all bags that ultimately require any of those contained within 'to_find'.
+    let rec findDeps (found: string Set) (toFind: string Set) =
+        
+        let newFound =
+            ruleLinks
+            |> Map.toSeq
+            |> Seq.choose (fun (bag, contains) ->
+                    if Set.intersect toFind contains |> Set.isEmpty then None
                     else Some bag
                 )
-            |> Set.ofList    
+            |> Set
         
-        let new_not_already_found =
-            Set.difference new_found found
+        // Only include those which we haven't already found.
+        let newNotAlreadyFound =
+            Set.difference newFound found
 
-        if new_not_already_found.IsEmpty then
+        // If we haven't found any new bags then we're done.
+        if newNotAlreadyFound.IsEmpty then
             found
+        // Otherwise, keep repeating.
         else
-            find_deps (Set.union found new_not_already_found) new_not_already_found
+            findDeps (Set.union found newNotAlreadyFound) newNotAlreadyFound
 
-
-    let rec sort_rules (sorted: string list) (not_sorted: (string * (string Set)) list) =
-        if not_sorted.IsEmpty then
-            sorted
-
-        else
-            let next_found = 
-                not_sorted
-                |> List.find (
-                    fun (bag, deps) ->
-                        deps |> Set.forall (fun x -> List.contains x sorted))
-
-            sort_rules ((fst next_found)::sorted) (not_sorted |> List.except [next_found])
-
-    
-    find_deps Set.empty (set ["shiny gold"])
+    // Find all bags that ultimately contain a shiny gold bag.
+    findDeps Set.empty (set ["shiny gold"])
     |> Set.count
     |> printfn "Part 1 answer = %i"
 
-    let sorted_rules =
-        List.foldBack (
+    // Will return a list of topologically sorted bag types.
+    // The tail of the list has the least number of precedents.
+    let sortedRules =
+        // Here we are doing a topological sort of the bag rules.
+        // 'Sorted' has to be list (rather than a set) so that ordering is maintained.
+        let rec sortRules (sorted: string list) (notSorted: Map<string, string Set>) =
+            // If everything is sorted then we are done!
+            if notSorted.IsEmpty then
+                sorted
+
+            // Otherwise...
+            else
+                // Find the next bag for which the precedents have already been sorted.
+                let nextFound = 
+                    notSorted
+                    |> Map.toSeq
+                    |> Seq.find (snd >> Set.forall (fun x -> List.contains x sorted))
+                    |> fst
+
+                // Now sort whatever has yet to be sorted.
+                sortRules (nextFound::sorted) (notSorted |> Map.remove nextFound)
+
+        sortRules [] ruleLinks    
+
+    // Using the topologicaly sort above, determine the number of sub-bags that each bag type has.
+    let bagCount =
+        sortedRules
+        // Start at the back where the bags have the least number of precedents.
+        |> List.foldBack (
             fun bag (state: Map<string, int>) ->
-                let curr_total =
+                let currTotal =
                     rules.[bag]
-                    |> List.sumBy (fun (count, sub_bag) -> count * (1 + state.[sub_bag]))
+                    |> List.sumBy (fun (count, subBag) -> count * (1 + state.[subBag]))
 
                 state
-                |> Map.add bag curr_total) (sort_rules [] rule_links) Map.empty<string, int>
+                |> Map.add bag currTotal) <| Map.empty<string, int>
      
-    sorted_rules.["shiny gold"]
+    bagCount.["shiny gold"]
     |> printfn "Part 2 answer = %i"
 
     0 // return an integer exit code
