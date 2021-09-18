@@ -1,5 +1,4 @@
-﻿// Learn more about F# at http://fsharp.org
-
+﻿
 open System
 open System.IO
 
@@ -39,4 +38,4 @@ let main argv =
     |> (+) 1
     |> printfn "Part 2 answer = %A"
     
-    0 // return an integer exit code
+    0

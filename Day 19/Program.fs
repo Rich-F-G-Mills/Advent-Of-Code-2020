@@ -1,11 +1,9 @@
-﻿// Learn more about F# at http://fsharp.org
-
+﻿
 open System
 open System.IO
 open System.Text.RegularExpressions
 open FSharpx.Text.Regex
 open FSharpx
-
 
 [<AutoOpen>]
 module Rules =
@@ -17,24 +15,30 @@ module Rules =
 
     let rec checkMatch (rules: Map<int, Rule>) ruleno remaining =
         let bindFold =
-            List.fold (fun curr_state subruleno -> Result.bind (checkMatch rules subruleno) curr_state) (Ok remaining)
+            let binder curr_state subruleno =
+                    Result.bind (checkMatch rules subruleno) curr_state
+
+            List.fold binder (Ok remaining)
 
         match remaining with
-        | [] -> Error ()
+        | [] -> Error "Nothing left of message."
         | r::rs ->
             match rules.[ruleno] with
-            | Letter l when r = l -> Ok rs
+            | Letter l when r = l ->
+                Ok rs
 
-            | SubRules srs -> srs |> bindFold
+            | Letter l ->
+                Error $"Failed to match against {l}."
+
+            | SubRules srs ->
+                srs |> bindFold
 
             | OrRules (srs1, srs2) ->
                 srs1
                 |> bindFold
                 |> function
-                    | Error () -> srs2 |> bindFold
+                    | Error _ -> srs2 |> bindFold
                     | Ok _ as result -> result
-
-            | _ -> Error ()
 
 
 [<EntryPoint>]
@@ -42,7 +46,7 @@ let main argv =
     
     let (rules, messages) =
         let inputs =
-            File.ReadAllLines "TESTINPUTS.TXT"
+            File.ReadAllLines "INPUTS_TEST.TXT"
 
         let (_rules, _messages) =
             inputs
@@ -65,9 +69,9 @@ let main argv =
                 |> Seq.toList
 
             let (ruleno, spec) =
-                match tryMatch "^(\\d+):(.*)$" input with
-                | Some { Groups = [ group_ruleno; group_spec ] }
-                    -> (int32 group_ruleno.Value, group_spec.Value)
+                match tryMatch @"^(\d+):(.*)$" input with
+                | Some { GroupValues = [ group_ruleno; group_spec ] }
+                    -> (int32 group_ruleno, group_spec)
 
                 | _ -> failwith $"Unable to process record number for rule '{input}'."
 
@@ -100,20 +104,25 @@ let main argv =
         |> checkMatch rules 0
         |> function | Ok [] -> true | _ -> false
 
+    //messages
+    //|> Seq.filter (checkAgainstRule0 rules)
+    //|> Seq.length
+    //|> printfn "Part 1 answer = %i\n\n"
+
+    printfn "Messages satisfying part 1 rules...\n\n"
+
     messages
     |> Seq.filter (checkAgainstRule0 rules)
-    |> Seq.length
-    |> printfn "Part 1 answer = %i\n\n"
+    |> Seq.iter (printfn "%A")
 
     let new_rules =
-        let _new_rules =
-            rules
-            |> Map.add 8 (OrRules ([42], [42; 8]))
-            |> Map.add 11 (OrRules ([42; 31], [42; 11; 31]))
+        rules
+        |> Map.add 8 (OrRules ([42], [42; 8]))
+        |> Map.add 11 (OrRules ([42; 31], [42; 11; 31]))
 
-        _new_rules
+    printfn "\n\nMessages satisfying part 2 rules...\n\n"
 
-    printfn "Messages satisfying part 2 rules...\n\n"
+    //let test = checkMatch new_rules 0 ("babbbbaabbbbbabbbbbbaabaaabaaa" |> List.ofSeq)
 
     messages
     |> Seq.filter (checkAgainstRule0 new_rules)
@@ -121,4 +130,4 @@ let main argv =
 
     printfn "\n\n"
 
-    0 // return an integer exit code
+    0

@@ -216,13 +216,16 @@ let main args =
                 let next_tile =
                     match (next_x, next_y) with
                     | (nx, 0) when nx > 0 ->
-                        (tileLinks.[grid.[nx-1, 0].TransformedId].RightLink, tileLinks.[grid.[nx-1, 0].TransformedId].RightLink)
+                        (tileLinks.[grid.[nx-1, 0].TransformedId].RightLink,
+                         tileLinks.[grid.[nx-1, 0].TransformedId].RightLink)
 
                     | (0, ny) when ny > 0 ->
-                        (tileLinks.[grid.[0, ny-1].TransformedId].DownLink, tileLinks.[grid.[0, ny-1].TransformedId].DownLink)
+                        (tileLinks.[grid.[0, ny-1].TransformedId].DownLink,
+                         tileLinks.[grid.[0, ny-1].TransformedId].DownLink)
 
                     | (nx, ny) when (nx > 0) && (ny > 0) ->
-                        (tileLinks.[grid.[nx-1, ny].TransformedId].RightLink, tileLinks.[grid.[nx, ny-1].TransformedId].DownLink)
+                        (tileLinks.[grid.[nx-1, ny].TransformedId].RightLink,
+                         tileLinks.[grid.[nx, ny-1].TransformedId].DownLink)
 
                     | _ -> failwith "Unexpected error."
 

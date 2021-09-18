@@ -21,12 +21,14 @@ let main argv =
         |> Seq.takeWhile (fun (_, y) -> y < gridHeight)
         |> Seq.sumBy trees_at_location
 
+    // Determine the number of tree encountered moving in the specified direction.
     trees_encountered (3, 1)
     |> printfn "Part 1 answer = %i"
 
+    // As above but for multiple directions.
     [(1,1); (3,1); (5,1); (7,1); (1,2)]
     |> Seq.map trees_encountered
     |> Seq.reduce (*)
     |> printfn "Part 2 answer = %A"  
 
-    0 // return an integer exit code
+    0

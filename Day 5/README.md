@@ -15,7 +15,7 @@ Given all of the other seat IDs occupied on the plane, determine which one has y
 
 ##### Inputs
 
-The [puzzle input](https://github.com/Rich-F-G-Mills/Advent-Of-Code-2020-/blob/master/Day%205/Inputs.txt) provides a list of boarding pass codes to be decoded.
+The [puzzle input](Inputs.txt) provides a list of boarding pass codes to be decoded.
 
 ```
 BFBFFFFLLL

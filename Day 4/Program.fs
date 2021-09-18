@@ -1,5 +1,4 @@
-﻿// Learn more about F# at http://fsharp.org
-
+﻿
 open System
 open System.IO
 open System.Text.RegularExpressions
@@ -31,7 +30,8 @@ let main argv =
             | (true, value) -> (value >= min) && (value <= max)
             | _ -> false
 
-        // First attempt at using active patterns.
+        // (First attempt at using active patterns)
+        // Use an active pattern to match against the units (if specified).
         let (|Inches|Cm|Neither|) (x: string) =
             let reMatch = Regex.Match(x, @"^(\d{2,3})(in|cm)$")
 
@@ -48,6 +48,7 @@ let main argv =
             else
                 Neither      
 
+        // Construct the list of predicates to be returned.
         [("byr", isDigits 1920 2002)
          ("iyr", isDigits 2010 2020)
          ("eyr", isDigits 2020 2030)
@@ -78,11 +79,6 @@ let main argv =
         passportInfo
         |> Array.filter hasRequiredFields
 
-    validPassports
-    // Retain on those elements which are true.
-    |> Array.length
-    |> printfn "Part 1 answer = %i"
-
     // Check to see if all of the fields on the passport are valid.
     let allFieldsValid passport =
         // Check to see if a particular field is valid.
@@ -98,8 +94,13 @@ let main argv =
         |> Map.forall validField
 
     validPassports
+    |> Array.length
+    |> printfn "Part 1 answer = %i"
+
+    validPassports
+    // As above but all fields must be valid.
     |> Seq.filter allFieldsValid 
     |> Seq.length
     |> printfn "Part 2 answer = %i"
 
-    0 // return an integer exit code
+    0

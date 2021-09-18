@@ -72,11 +72,6 @@ let main argv =
         else
             findDeps (Set.union found newNotAlreadyFound) newNotAlreadyFound
 
-    // Find all bags that ultimately contain a shiny gold bag.
-    findDeps Set.empty (set ["shiny gold"])
-    |> Set.count
-    |> printfn "Part 1 answer = %i"
-
     // Will return a list of topologically sorted bag types.
     // The tail of the list has the least number of precedents.
     let sortedRules =
@@ -86,7 +81,6 @@ let main argv =
             // If everything is sorted then we are done!
             if notSorted.IsEmpty then
                 sorted
-
             // Otherwise...
             else
                 // Find the next bag for which the precedents have already been sorted.
@@ -114,7 +108,13 @@ let main argv =
                 state
                 |> Map.add bag currTotal) <| Map.empty<string, int>
      
+    // Find all bags that ultimately contain a shiny gold bag.
+    findDeps Set.empty (set ["shiny gold"])
+    |> Set.count
+    |> printfn "Part 1 answer = %i"
+
+    // Find how many individual bags are required inside a single gold bag.
     bagCount.["shiny gold"]
     |> printfn "Part 2 answer = %i"
 
-    0 // return an integer exit code
+    0

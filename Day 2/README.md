@@ -13,7 +13,7 @@ As above, but subject to a difference interpretation of the rules.
 
 ##### Inputs
 
-The [puzzle input](https://github.com/Rich-F-G-Mills/Advent-Of-Code-2020-/blob/master/Day%202/Inputs.txt) provides a list of numbers such as those below:  
+The [puzzle input](Inputs.txt) provides a list of numbers such as those below:  
 > 4-5 r: rrrjr   
 > 9-10 x: pxcbpxxwkqjttx  
 > 8-13 b: rjbbbbvgrbrfjx  

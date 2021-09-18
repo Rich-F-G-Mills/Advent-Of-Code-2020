@@ -1,7 +1,6 @@
 ﻿
 open System.IO
 open System.Text.RegularExpressions
-open System.Diagnostics
 
 // Does 'chr' appear the required number of times within the password?
 let isValid1 (min, max, chr, pwd) =
@@ -54,4 +53,4 @@ let main argv =
     |> Array.length
     |> printfn "Answer part 2 = %i"
 
-    0 // return an integer exit code
+    0

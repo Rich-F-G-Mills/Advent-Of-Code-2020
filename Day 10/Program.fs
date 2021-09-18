@@ -14,27 +14,15 @@ let main argv =
         |> Array.max
         |> (+) 3
 
-    inputs
-    |> Array.append [|0; deviceRating|]
-    |> Array.sortDescending
-    |> Array.pairwise
-    // Count the number 1 jolt and 3 jolt differences
-    |> Array.countBy ((<||) (-))
-    // Extract the counts for each jolt-difference.
-    |> Array.map snd
-    // Multiply these two numbers together.
-    |> Array.reduce (*)
-    |> printfn "Part 1 answer = %i"
-
     // Finds the number of ways in which each grouping can be arranged.
-    let rec findLayouts accrued last_added remaining =
+    let rec findLayouts last_added remaining =
         match remaining with
-        | [] -> failwith "Unexpected error."
+        | [] -> 0L
         | [r] ->
             if r <= (last_added + 3) then 1L else 0L
         | r::rs ->
             if r <= (last_added + 3) then
-                (findLayouts accrued last_added rs) + (findLayouts (r::accrued) r rs)
+                (findLayouts last_added rs) + (findLayouts r rs)
             else 0L                
 
     // Allocate contiguous sections of sorted joltage ratings into groups.
@@ -62,11 +50,23 @@ let main argv =
         |> Array.append [|0|]
         |> Array.take (Array.length groupings)
 
+    inputs
+    |> Array.append [|0; deviceRating|]
+    |> Array.sortDescending
+    |> Array.pairwise
+    // Count the number 1 jolt and 3 jolt differences
+    |> Array.countBy ((<||) (-))
+    // Extract the counts for each jolt-difference.
+    |> Array.map snd
+    // Multiply these two numbers together.
+    |> Array.reduce (*)
+    |> printfn "Part 1 answer = %i"
+
     groupings
     |> Array.zip priorCloses
-    |> Array.map ((<||) (findLayouts []))
+    |> Array.map ((<||) findLayouts)
     // Multiply together the number of arrangements for each sub-group.
     |> Array.reduce (*)
     |> printfn "Part 2 answer = %i"
 
-    0 // return an integer exit code
+    0

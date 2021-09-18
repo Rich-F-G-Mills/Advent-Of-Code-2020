@@ -30,7 +30,7 @@ There is no change to Acc instructions.
 
 ##### Inputs
 
-The [puzzle input](https://github.com/Rich-F-G-Mills/Advent-Of-Code-2020-/blob/master/Day%208/Inputs.txt) has ~600 lines of instructions.
+The [puzzle input](Inputs.txt) has ~600 lines of instructions.
 
 An example is shown below:
 ```

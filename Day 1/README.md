@@ -13,7 +13,7 @@ As above, but find the three numbers that sum to 2020.
 
 ##### Inputs
 
-The [puzzle input](https://github.com/Rich-F-G-Mills/Advent-Of-Code-2020-/blob/master/Day%201/Inputs.txt) provides a list of numbers such as those below:  
+The [puzzle input](Inputs.txt) provides a list of numbers such as those below:  
 > 1470  
 > 1577  
 > 1054  

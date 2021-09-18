@@ -90,17 +90,6 @@ let main argv =
           has_terminated = false
         }
 
-    // Keep executing instructions until a line is run for the second time.
-    Seq.initInfinite id
-    |> Seq.scan (execute inputs) init_state
-    // Continue to execute whilst we've yet to run a line more than once.
-    |> Seq.takeWhile (fun state -> not state.duplicate_encountered)
-    // The last state provided will that just prior to a line being run a second time.
-    |> Seq.last
-    // Extract the accumulator.
-    |> fun s -> s.accumulator
-    |> printfn "Part 1 answer = %A"
-
     // Returns an executor where the instruction at 'idx' has been switched.
     // eg... Nop 20 -> Jmp 20   and   Jmp 20 -> Nop 20
     let execute_with_switch idx =
@@ -116,6 +105,17 @@ let main argv =
 
         // Return this as a partially applied executor.
         execute new_inputs
+
+    // Keep executing instructions until a line is run for the second time.
+    Seq.initInfinite id
+    |> Seq.scan (execute inputs) init_state
+    // Continue to execute whilst we've yet to run a line more than once.
+    |> Seq.takeWhile (fun state -> not state.duplicate_encountered)
+    // The last state provided will that just prior to a line being run a second time.
+    |> Seq.last
+    // Extract the accumulator.
+    |> fun s -> s.accumulator
+    |> printfn "Part 1 answer = %A"
 
     // We want to find out which line, that when switched, yields a program that terminates properly.
     inputs
@@ -137,8 +137,7 @@ let main argv =
                     when pos = inputs.Length
                         // Extract the accumulator at that point if so.
                         -> Some acc
-                | _ -> None
-       )
+                | _ -> None)
     |> printfn "Part 2 answer = %i"
 
-    0 // return an integer exit code
+    0

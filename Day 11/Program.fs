@@ -1,7 +1,7 @@
 ﻿
 open System.IO
 
-// Represents the value for each cell in the grid.
+// Represents the possible states for each cell in the floorspace (ie. "grid")
 type CellType =
     | Floor
     | EmptySeat
@@ -13,6 +13,9 @@ type CellType =
         | 'L' -> EmptySeat
         | '#' -> OccupiedSeat
         | _ -> failwith "Invalid puzzle input."
+
+type Rule =
+    (CellType [][] -> int * int -> CellType)
 
 
 [<EntryPoint>]
@@ -54,19 +57,19 @@ let main argv =
                     |> Array.filter isWithinGrid))
 
     // Determine the new state for a cell at a given location (according to part 1).
-    let rulePart1 grid (cell_x, cell_y) =
+    let rulePart1 grid (cellX, cellY) =
         let surroundingOccupied =
             surroundingCoords
-            |> Array.item cell_y
-            |> Array.item cell_x
+            |> Array.item cellY
+            |> Array.item cellX
             |> Array.map (fun (x, y) -> grid |> Array.item y |> Array.item x)
             |> Array.map (function | OccupiedSeat -> 1 | _ -> 0)
             |> Array.sum
 
         let cell =
             grid
-            |> Array.item cell_y
-            |> Array.item cell_x
+            |> Array.item cellY
+            |> Array.item cellX
 
         match cell with
         | EmptySeat when surroundingOccupied = 0 -> OccupiedSeat
@@ -74,23 +77,24 @@ let main argv =
         | _ -> cell
 
     // Determine the new state for a cell at a given location (according to part 2).
-    let rulePart2 grid (cell_x, cell_y) =
+    let rulePart2 grid (cellX, cellY) =
         let surroundingOccupied =
+            let stretchOut (dx, dy) =
+                Seq.initInfinite id
+                |> Seq.skip 1
+                |> Seq.map (fun scalar -> (cellX + scalar * dx, cellY + scalar * dy))
+                |> Seq.takeWhile isWithinGrid
+                |> Seq.map (fun (sx, sy) -> grid |> Array.item sy |> Array.item sx)
+                |> Seq.tryFind (function | Floor -> false | _ -> true)
+
             surroundingDeltas
-            |> Array.map (
-                fun (dx, dy) ->
-                    Seq.initInfinite id
-                    |> Seq.skip 1
-                    |> Seq.map (fun scalar -> (cell_x + scalar * dx, cell_y + scalar * dy))
-                    |> Seq.takeWhile isWithinGrid
-                    |> Seq.map (fun (sx, sy) -> grid |> Array.item sy |> Array.item sx)
-                    |> Seq.tryFind (function | Floor -> false | _ -> true))
+            |> Array.map stretchOut                    
             |> Array.sumBy (function | Some OccupiedSeat -> 1 | _ -> 0)
 
         let cell =
             grid
-            |> Array.item cell_y
-            |> Array.item cell_x
+            |> Array.item cellY
+            |> Array.item cellX
                 
         match cell with
         | EmptySeat when surroundingOccupied = 0 -> OccupiedSeat
@@ -98,13 +102,14 @@ let main argv =
         | _ -> cell
 
     // A wrapper to repeatedly apply given logic to each cell in a grid.
-    let rec generateIterations ruleLogic grid =
+    let rec generateIterations (ruleLogic: Rule) grid =
         seq {
             let result = Array.map (Array.map (ruleLogic grid)) coords
             yield result
             yield! generateIterations ruleLogic result
         }
 
+    // Create wrappers for the respective rule sets.
     let iterateGridPart1 = generateIterations rulePart1
     let iterateGridPart2 = generateIterations rulePart2
 

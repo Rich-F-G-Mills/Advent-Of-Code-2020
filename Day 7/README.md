@@ -17,7 +17,7 @@ As above, the some of this count over all groups is the answer.
 
 ##### Inputs
 
-The [puzzle input](https://github.com/Rich-F-G-Mills/Advent-Of-Code-2020-/blob/master/Day%206/Inputs.txt) provides a list of responses.
+The [puzzle input](Inputs.txt) provides a list of responses.
 
 As an example, the puzzle below has:
 * 2 groups of 1 and 3 people respectively.

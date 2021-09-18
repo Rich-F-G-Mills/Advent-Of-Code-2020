@@ -13,7 +13,7 @@ As above, but the respective fields must of a particular format.
 
 ##### Inputs
 
-The [puzzle input](https://github.com/Rich-F-G-Mills/Advent-Of-Code-2020-/blob/master/Day%204/Inputs.txt) provides a list of numbers such as those below:  
+The [puzzle input](Inputs.txt) provides a list of numbers such as those below:  
 
 The sample below shows the relevant information for 3x passports.
 
